@@ -13,82 +13,99 @@ var result = {
 var Login = async function(req,res){
     try {
 
+        var email = req.body.email
+        futil.logger.debug('\n' + futil.shtm() + '- [ EMAIL ] | QUERING ' + util.inspect(email));
+        var password = req.body.password
+        futil.logger.debug('\n' + futil.shtm() + '- [ PASSWORD ] | QUERING ' + util.inspect(password));
 
-        const user = await User.findAll({
-            where: {
-                email: req.body.email
-              }
-        });
-        
-        futil.logger.debug('\n' + futil.shtm() + '- [ RESULT ] | QUERING ' + util.inspect(user));
-        
-        if (user.length >0){
-            var hash = user[0].password
-            // futil.logger.debug('\n' + futil.shtm() + '- [ HASH ] | QUERING ' + util.inspect(hash));
-
-           CheckPassword(req.body.password,hash).then(function(response){
-                if (response == true){
-
-                    const jwtKey = process.env.TOKEN_SECRET
-                    const jwtExpirySeconds = '1d'
-                    var email = req.body.email
-
-                    const token = jwt.sign({ email }, jwtKey, {
-                        algorithm: "HS256",
-                        expiresIn: jwtExpirySeconds,
-                    })
-
-                    UpdateToken(email,token).then(function(response){
-                        if(response == true){
-                            result.status = 'success'
-                            result.message = "user found"
-                            result.token = token
-                        
-                
-                            res.setHeader("Content-Type", "application/json");
-                            res.writeHead(200);
-                            res.end(JSON.stringify(result));
-                        }else{
-
-                            delete result.token;
-                            result.status = 'failed'
-                            result.message = "user not found"
-                           
-                        
-                
-                            res.setHeader("Content-Type", "application/json");
-                            res.writeHead(400);
-                            res.end(JSON.stringify(result));
-                        }
-                    })
-
-                   
-                }else{
-
-                    delete result.token;
-                    result.status = 'failed'
-                    result.message = "password not same"
-                    
-        
-                    res.setHeader("Content-Type", "application/json");
-                    res.writeHead(400);
-                    res.end(JSON.stringify(result));
-                }
-           })
-
-           
-
-        }else{
+        if (!email || !password) {
             delete result.token;
             result.status = 'failed'
-            result.message = "user not found"
+            result.message = 'email or password is required'
         
-
+    
             res.setHeader("Content-Type", "application/json");
             res.writeHead(400);
             res.end(JSON.stringify(result));
+        }else{
+                    const user = await User.findAll({
+                        where: {
+                            email: req.body.email
+                        }
+                    });
+                    
+                    futil.logger.debug('\n' + futil.shtm() + '- [ RESULT ] | QUERING ' + util.inspect(user));
+                    
+                    if (user.length >0){
+                        var hash = user[0].password
+                        // futil.logger.debug('\n' + futil.shtm() + '- [ HASH ] | QUERING ' + util.inspect(hash));
+
+                    CheckPassword(req.body.password,hash).then(function(response){
+                            if (response == true){
+
+                                const jwtKey = process.env.TOKEN_SECRET
+                                const jwtExpirySeconds = '1d'
+                                var email = req.body.email
+
+                                const token = jwt.sign({ email }, jwtKey, {
+                                    algorithm: "HS256",
+                                    expiresIn: jwtExpirySeconds,
+                                })
+
+                                UpdateToken(email,token).then(function(response){
+                                    if(response == true){
+                                        result.status = 'success'
+                                        result.message = "user found"
+                                        result.token = token
+                                    
+                            
+                                        res.setHeader("Content-Type", "application/json");
+                                        res.writeHead(200);
+                                        res.end(JSON.stringify(result));
+                                    }else{
+
+                                        delete result.token;
+                                        result.status = 'failed'
+                                        result.message = "user not found"
+                                    
+                                    
+                            
+                                        res.setHeader("Content-Type", "application/json");
+                                        res.writeHead(400);
+                                        res.end(JSON.stringify(result));
+                                    }
+                                })
+
+                            
+                            }else{
+
+                                delete result.token;
+                                result.status = 'failed'
+                                result.message = "password not same"
+                                
+                    
+                                res.setHeader("Content-Type", "application/json");
+                                res.writeHead(400);
+                                res.end(JSON.stringify(result));
+                            }
+                    })
+
+                    
+
+                    }else{
+                        delete result.token;
+                        result.status = 'failed'
+                        result.message = "user not found"
+                    
+
+                        res.setHeader("Content-Type", "application/json");
+                        res.writeHead(400);
+                        res.end(JSON.stringify(result));
+                    }
+
         }
 
+        
     } catch (err) {
         futil.logger.debug('\n' + futil.shtm() + '- [ ERROR ] | QUERING ' + util.inspect(err));
         
