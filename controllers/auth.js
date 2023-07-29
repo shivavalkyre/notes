@@ -147,6 +147,7 @@ var authAccessToken = async function (req,res,next){
 
         futil.logger.debug('\n' + futil.shtm() + '- [ ERROR ] | AUTH' + util.inspect(err));
 
+        delete result.token;
         result.status = 'failed'
         result.message = err.message
     
